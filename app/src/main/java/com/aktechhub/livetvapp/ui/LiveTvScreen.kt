@@ -147,10 +147,9 @@ fun LiveTvScreen(onExit: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         )
 
-        // FIXED: Define currentChannel before using it
-        val currentChannel = channels[currentChannelIndex]
-
         if (showChannelDetail) {
+            val currentChannel = channels[currentChannelIndex]
+
             ChannelDetailScreen(
                 channelNumber = currentChannel.number.toString(),
                 channelName = currentChannel.name,

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,38 +29,45 @@ fun ChannelDetailScreen(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .background(Color.Black.copy(alpha = 0.7f), shape = RoundedCornerShape(8.dp))
-            .padding(16.dp)
+            .background(Color.Black.copy(alpha = 0.7f)) // Semi-transparent background
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Channel Details Row
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart) // Align to the bottom-left corner
+                .padding(16.dp), // Add padding for spacing
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Channel Logo
+            AsyncImage(
+                model = channelLogoUrl,
+                contentDescription = "Channel Logo",
+                modifier = Modifier
+                    .size(60.dp) // Adjust size as needed
+                    .padding(end = 16.dp) // Add spacing between logo and text
+            )
+
+            // Channel Number and Name
             Column {
                 Text(
                     text = channelNumber,
                     color = Color.White,
-                    fontSize = 24.sp,
+                    fontSize = 22.sp, // Adjust font size
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = channelName,
                     color = Color.White,
-                    fontSize = 18.sp,
+                    fontSize = 18.sp, // Adjust font size
                     fontWeight = FontWeight.Medium
-                )
-                AsyncImage(
-                    model = channelLogoUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .padding(top = 8.dp)
                 )
             }
         }
     }
 
-    // Hide the details after some time
+    // Auto-hide after 5 seconds
     LaunchedEffect(Unit) {
-        delay(3000) // Hide after 3 seconds
+        delay(5000)
         onTimeout()
     }
 }
