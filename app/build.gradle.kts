@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation (libs.androidx.navigation.compose)
+    implementation(libs.coil.compose)
 
     // Media3 ExoPlayer with HLS support
     implementation(libs.androidx.media3.exoplayer)

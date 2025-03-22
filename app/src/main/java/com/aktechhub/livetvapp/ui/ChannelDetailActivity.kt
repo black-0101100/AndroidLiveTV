@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,14 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 
 @Composable
 fun ChannelDetailScreen(
     channelNumber: Int,
     channelName: String,
-    channelLogo: @Composable () -> Unit, // Pass a composable function for logo
-    onTimeout: () -> Unit // Callback to hide screen after 5 seconds
+    channelLogoUrl: String, // URL of the logo image
+    onTimeout: () -> Unit
 ) {
     var visible by remember { mutableStateOf(true) }
 
@@ -60,8 +62,14 @@ fun ChannelDetailScreen(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Channel Logo
-                channelLogo()
+                // Channel Logo (Load image using Coil)
+                AsyncImage(
+                    model = channelLogoUrl,
+                    contentDescription = "Channel Logo",
+                    modifier = Modifier
+                        .width(50.dp)
+                        .height(50.dp)
+                )
 
                 Spacer(modifier = Modifier.width(8.dp))
 

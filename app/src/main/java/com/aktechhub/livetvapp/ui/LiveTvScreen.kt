@@ -10,7 +10,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -30,27 +29,23 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.aktechhub.livetvapp.repository.Channel
 import com.aktechhub.livetvapp.repository.ChannelRepository
 
 @Composable
 fun LiveTvScreen(onExit: () -> Unit) {
     val context = LocalContext.current
-   // val isTv = context.resources.configuration.uiMode and
-       //     Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
-
     val channels by remember { mutableStateOf(ChannelRepository.getChannels()) }
-
     var currentChannelIndex by remember { mutableIntStateOf(0) }
     var showChannelDetail by remember { mutableStateOf(false) }
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            setMediaItem(MediaItem.fromUri(channels[currentChannelIndex]))
+            setMediaItem(MediaItem.fromUri(channels[currentChannelIndex].streamUrl)) // FIXED
             prepare()
             play()
         }
@@ -68,7 +63,6 @@ fun LiveTvScreen(onExit: () -> Unit) {
 
     val swipeThreshold = 100f
     val swipeCooldown = 300L
-
     var lastSwipeTime by remember { mutableLongStateOf(0L) }
 
     val focusRequester = remember { FocusRequester() }
@@ -130,7 +124,6 @@ fun LiveTvScreen(onExit: () -> Unit) {
                         true
                     }
                     else -> {
-                        // Special handling for TV Remote OK button
                         if (keyEvent.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
                             showChannelDetail = true
                             return@onKeyEvent true
@@ -154,12 +147,14 @@ fun LiveTvScreen(onExit: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         )
 
-        // Show Channel Details Screen when needed
+        // FIXED: Define currentChannel before using it
+        val currentChannel = channels[currentChannelIndex]
+
         if (showChannelDetail) {
             ChannelDetailScreen(
-                channelNumber = currentChannelIndex + 1,
-                channelName = "Channel ${currentChannelIndex + 1}",
-                channelLogo = { Text("📺", fontSize = 24.sp) },
+                channelNumber = currentChannel.number,
+                channelName = currentChannel.name,
+                channelLogoUrl = currentChannel.logoUrl,
                 onTimeout = { showChannelDetail = false }
             )
         }
@@ -170,10 +165,11 @@ fun LiveTvScreen(onExit: () -> Unit) {
     }
 }
 
+// FIXED: Use List<Channel> instead of List<String>
 fun changeChannel(
     dragAmount: Float,
     currentIndex: Int,
-    channels: List<String>,
+    channels: List<Channel>,
     exoPlayer: ExoPlayer,
     onChannelChanged: (Int) -> Unit
 ) {
@@ -184,7 +180,7 @@ fun changeChannel(
     }
 
     exoPlayer.apply {
-        setMediaItem(MediaItem.fromUri(channels[newIndex]))
+        setMediaItem(MediaItem.fromUri(channels[newIndex].streamUrl)) // FIXED
         prepare()
         play()
     }
