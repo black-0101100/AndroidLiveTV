@@ -152,7 +152,7 @@ fun LiveTvScreen(onExit: () -> Unit) {
 
         if (showChannelDetail) {
             ChannelDetailScreen(
-                channelNumber = currentChannel.number,
+                channelNumber = currentChannel.number.toString(),
                 channelName = currentChannel.name,
                 channelLogoUrl = currentChannel.logoUrl,
                 onTimeout = { showChannelDetail = false }
