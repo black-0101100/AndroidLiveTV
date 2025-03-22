@@ -37,6 +37,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.aktechhub.livetvapp.repository.ChannelRepository
 
 @Composable
 fun LiveTvScreen(onExit: () -> Unit) {
@@ -44,19 +45,7 @@ fun LiveTvScreen(onExit: () -> Unit) {
     val isTv = context.resources.configuration.uiMode and
             Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
 
-    val channels = remember {
-        listOf(
-            "https://segment.yuppcdn.net/240122/news7/playlist.m3u8",
-            "https://segment.yuppcdn.net/110322/polimernews/playlist.m3u8",
-            "https://nw18live.cdn.jio.com/bpk-tv/News18_Tamil_Nadu_NW18_MOB/output01/News18_Tamil_Nadu_NW18_MOB-audio_98835_eng=98800-video=2293600.m3u8",
-            "https://segment.yuppcdn.net/140622/isaiaruvi/playlist.m3u8",
-            "https://segment.yuppcdn.net/050522/murasu/playlist.m3u8",
-            "https://segment.yuppcdn.net/240122/siripoli/playlist.m3u8",
-            "https://segment.yuppcdn.net/240122/kalaignartv/playlist.m3u8",
-            "https://segment.yuppcdn.net/240122/news7/playlist.m3u8",
-            "https://segment.yuppcdn.net/240122/puthiya/playlist.m3u8"
-        )
-    }
+    val channels by remember { mutableStateOf(ChannelRepository.getChannels()) }
 
     var currentChannelIndex by remember { mutableIntStateOf(0) }
     val exoPlayer = remember {
