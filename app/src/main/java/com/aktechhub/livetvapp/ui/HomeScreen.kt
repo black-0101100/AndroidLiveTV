@@ -7,7 +7,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,6 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,12 +52,9 @@ fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     val activity = context as? Activity
     var showExitDialog by remember { mutableStateOf(false) }
+    BackHandler { showExitDialog = true }
 
-    BackHandler {
-        showExitDialog = true
-    }
-
-    var selectedItem by remember { mutableStateOf("TV") } // Keep track of focused item
+    var selectedIndex by remember { mutableIntStateOf(0) } // Tracks focused item
 
     val menuItems = listOf(
         MenuItem("TV", R.drawable.main_tv, Color(0xFFE91E63)),
@@ -67,13 +69,34 @@ fun HomeScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .onKeyEvent { event ->  // D-pad key navigation
+                if (event.type == KeyEventType.KeyDown) {
+                    when (event.key) {
+                        Key.DirectionRight -> {
+                            if (selectedIndex < menuItems.lastIndex) selectedIndex++
+                            true
+                        }
+                        Key.DirectionLeft -> {
+                            if (selectedIndex > 0) selectedIndex--
+                            true
+                        }
+                        Key.Enter, Key.NumPadEnter -> { // Handle selection
+                            navigateToScreen(navController, menuItems[selectedIndex].title)
+                            true
+                        }
+                        else -> false
+                    }
+                } else false
+            }
     ) {
+        // Background
         Image(
             painter = painterResource(id = R.drawable.bg_home),
             contentDescription = null,
             modifier = Modifier.fillMaxSize()
         )
 
+        // Logo
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "SkyPlay Logo",
@@ -82,6 +105,7 @@ fun HomeScreen(navController: NavController) {
                 .size(120.dp)
         )
 
+        // Date & Time
         Column(
             horizontalAlignment = Alignment.End,
             modifier = Modifier
@@ -101,6 +125,7 @@ fun HomeScreen(navController: NavController) {
             )
         }
 
+        // Bottom Navigation Menu
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -108,24 +133,20 @@ fun HomeScreen(navController: NavController) {
                 .padding(bottom = 32.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            menuItems.forEach { item ->
+            menuItems.forEachIndexed { index, item ->
                 MenuItemCard(
                     item = item,
-                    isSelected = selectedItem == item.title,
+                    isSelected = selectedIndex == index,
                     onClick = {
-                        selectedItem = item.title
-                        when (item.title) {
-                            "TV" -> navController.navigate(Destinations.LIVE_TV)
-                            "Movies" -> navController.navigate(Destinations.LIVE_TV)
-                            "Radio" -> navController.navigate(Destinations.LIVE_TV)
-                            "Settings" -> navController.navigate(Destinations.LIVE_TV)
-                        }
+                        selectedIndex = index
+                        navigateToScreen(navController, item.title)
                     }
                 )
             }
         }
     }
 
+    // Exit Dialog
     if (showExitDialog) {
         ExitConfirmationDialog(
             onConfirm = { activity?.finish() },
@@ -134,24 +155,32 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+// Function to navigate based on menu item selection
+private fun navigateToScreen(navController: NavController, title: String) {
+    when (title) {
+        "TV" -> navController.navigate(Destinations.LIVE_TV)
+        "Movies" -> navController.navigate(Destinations.LIVE_TV)
+        "Radio" -> navController.navigate(Destinations.LIVE_TV)
+        "Settings" -> navController.navigate(Destinations.LIVE_TV)
+    }
+}
+
 @Composable
 fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
     val scale by animateFloatAsState(targetValue = if (isSelected) 1.2f else 1.0f, label = "")
 
-    val interactionSource = remember { MutableInteractionSource() }
-
     Card(
         modifier = Modifier
             .padding(8.dp)
-            .focusable(interactionSource = interactionSource)
             .clickable { onClick() }
             .width(140.dp * scale)
-            .height(80.dp * scale),
+            .height(80.dp * scale)
+            .focusable(),
         colors = CardDefaults.cardColors(
-            containerColor = item.color.copy(alpha = 0.6f) // Semi-transparent
+            containerColor = if (isSelected) item.color.copy(alpha = 0.8f) else item.color.copy(alpha = 0.6f)
         ),
-        shape = RoundedCornerShape(16.dp), // Rounded corners
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 16.dp else 8.dp)
     ) {
         Column(
             modifier = Modifier
@@ -171,12 +200,12 @@ fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
             Image(
                 painter = painterResource(id = item.iconRes),
                 contentDescription = item.title,
-                modifier = Modifier.size(if (isSelected) 40.dp else 32.dp)
+                modifier = Modifier.size(if (isSelected) 48.dp else 32.dp) // Bigger when selected
             )
             Text(
                 text = item.title,
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = if (isSelected) 18.sp else 16.sp,
                 fontWeight = FontWeight.Bold
             )
         }
