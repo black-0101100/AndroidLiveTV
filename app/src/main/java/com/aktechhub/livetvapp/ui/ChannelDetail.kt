@@ -4,9 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,39 +34,58 @@ fun ChannelDetailScreen(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Black.copy(alpha = 0.7f)) // Semi-transparent background
+            .fillMaxSize() // Fill the entire screen to allow positioning
+            .background(Color.Transparent), // No background here, we'll apply it to the Card
+        contentAlignment = Alignment.BottomCenter // Place the content at the bottom center
     ) {
-        // Channel Details Row
-        Row(
+        Card(
             modifier = Modifier
-                .align(Alignment.BottomStart) // Align to the bottom-left corner
-                .padding(16.dp), // Add padding for spacing
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Channel Logo
-            AsyncImage(
-                model = channelLogoUrl,
-                contentDescription = "Channel Logo",
-                modifier = Modifier
-                    .size(60.dp) // Adjust size as needed
-                    .padding(end = 16.dp) // Add spacing between logo and text
+                .fillMaxWidth(fraction = 0.9f) // Take 50% of the screen width
+                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp), // Padding around the card, with bottom padding to avoid overlapping with any ticker
+            shape = RoundedCornerShape(12.dp), // Rounded corners for the box
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.6f) // Semi-transparent background
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 4.dp // Slight shadow for a "card" effect
             )
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(20.dp), // Increased padding inside the card for a more spacious look
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Logo Box
+                Box(
+                    modifier = Modifier
+                        .size(80.dp) // Increased logo size to match the second screenshot
+                        .background(Color.Black.copy(alpha = 0.4f)) // Slightly transparent box
+                        .padding(8.dp)
+                ) {
+                    AsyncImage(
+                        model = channelLogoUrl,
+                        contentDescription = "Channel Logo",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
-            // Channel Number and Name
-            Column {
-                Text(
-                    text = channelNumber,
-                    color = Color.White,
-                    fontSize = 22.sp, // Adjust font size
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = channelName,
-                    color = Color.White,
-                    fontSize = 18.sp, // Adjust font size
-                    fontWeight = FontWeight.Medium
-                )
+                Spacer(modifier = Modifier.width(16.dp)) // Increased space between logo and text for better balance
+
+                // Channel Details
+                Column {
+                    Text(
+                        text = channelNumber,
+                        color = Color.White,
+                        fontSize = 24.sp, // Increased font size to match the second screenshot
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = channelName,
+                        color = Color.White,
+                        fontSize = 20.sp, // Increased font size to match the second screenshot
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
@@ -71,3 +96,4 @@ fun ChannelDetailScreen(
         onTimeout()
     }
 }
+
