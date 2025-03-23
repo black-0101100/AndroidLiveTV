@@ -2,33 +2,48 @@ package com.aktechhub.livetvapp.navigation
 
 // Navigation.kt
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.aktechhub.livetvapp.extentions.LocalNavController
 import com.aktechhub.livetvapp.ui.HomeScreen
 import com.aktechhub.livetvapp.ui.LiveTvScreen
 import com.aktechhub.livetvapp.ui.SplashScreen
+import kotlinx.serialization.Serializable
 
-object Destinations {
-    const val SPLASH = "splash"
-    const val HOME = "home"
-    const val LIVE_TV = "liveTv"
+
+sealed class ScreenRoutes {
+    @Serializable
+    data object SPLASH: ScreenRoutes()
+    @Serializable
+    data object HOME: ScreenRoutes()
+    @Serializable
+    data object LIVETV: ScreenRoutes()
 }
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Destinations.SPLASH) {
-        composable(Destinations.SPLASH) {
-            SplashScreen(navController)
-        }
-        composable(Destinations.HOME) {
-            HomeScreen(navController)
-        }
-        composable(Destinations.LIVE_TV) {
-            LiveTvScreen{
-                navController.popBackStack() // Exit Live TV screen when back is pressed
+
+    CompositionLocalProvider(
+        LocalNavController provides navController
+    ) {
+
+        NavHost(navController = navController, startDestination = ScreenRoutes.SPLASH) {
+            composable<ScreenRoutes.SPLASH> {
+                SplashScreen()
+            }
+            composable<ScreenRoutes.HOME> {
+                HomeScreen()
+            }
+            composable<ScreenRoutes.LIVETV> {
+                LiveTvScreen {
+                    navController.popBackStack() // Exit Live TV screen when back is pressed
+                }
             }
         }
+
     }
+
 }
 

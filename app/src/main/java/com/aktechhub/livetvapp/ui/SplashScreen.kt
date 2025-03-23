@@ -12,21 +12,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import com.aktechhub.livetvapp.navigation.Destinations
+import com.aktechhub.livetvapp.extentions.LocalNavController
+import com.aktechhub.livetvapp.navigation.ScreenRoutes
 import kotlinx.coroutines.delay
 
 // SplashScreen.kt
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen() {
+
+    val navController = LocalNavController.current
+
     val isTv = LocalContext.current.resources.configuration.uiMode and
             Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
 
     LaunchedEffect(Unit) {
         delay(2000)
-        navController.navigate(Destinations.HOME) {
-            popUpTo(Destinations.SPLASH) { inclusive = true }
-        }
+        navController.popBackStack()
+        navController.navigate(ScreenRoutes.HOME)
     }
 
     Box(

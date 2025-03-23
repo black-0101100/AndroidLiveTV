@@ -45,10 +45,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.aktechhub.livetvapp.R
-import com.aktechhub.livetvapp.navigation.Destinations
+import com.aktechhub.livetvapp.extentions.LocalNavController
+import com.aktechhub.livetvapp.navigation.ScreenRoutes
+
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen() {
+
+    val navController = LocalNavController.current
     val context = LocalContext.current
     val activity = context as? Activity
     var showExitDialog by remember { mutableStateOf(false) }
@@ -58,12 +62,14 @@ fun HomeScreen(navController: NavController) {
 
     val menuItems = listOf(
         MenuItem("TV", R.drawable.main_tv, Color(0xFFE91E63)),
-        MenuItem("Movies", R.drawable.main_vod, Color(0xFF8BC34A)),
+        MenuItem("VOD", R.drawable.main_vod, Color(0xFF8BC34A)),
         MenuItem("Radio", R.drawable.main_radio, Color(0xFF2196F3)),
         MenuItem("Settings", R.drawable.main_settings, Color(0xFFFF9800)),
-        MenuItem("Music", R.drawable.main_radio, Color(0xFF4CAF50)),
-        MenuItem("Apps", R.drawable.main_settings, Color(0xFF03A9F4))
+        MenuItem("Profile", R.drawable.main_profile, Color(0xFF4CAF50)),
+        MenuItem("Application", R.drawable.main_applications, Color(0xFF03A9F4))
     )
+
+
 
     Box(
         modifier = Modifier
@@ -76,14 +82,17 @@ fun HomeScreen(navController: NavController) {
                             if (selectedIndex < menuItems.lastIndex) selectedIndex++
                             true
                         }
+
                         Key.DirectionLeft -> {
                             if (selectedIndex > 0) selectedIndex--
                             true
                         }
+
                         Key.Enter, Key.NumPadEnter -> { // Handle selection
                             navigateToScreen(navController, menuItems[selectedIndex].title)
                             true
                         }
+
                         else -> false
                     }
                 } else false
@@ -158,10 +167,10 @@ fun HomeScreen(navController: NavController) {
 // Function to navigate based on menu item selection
 private fun navigateToScreen(navController: NavController, title: String) {
     when (title) {
-        "TV" -> navController.navigate(Destinations.LIVE_TV)
-        "Movies" -> navController.navigate(Destinations.LIVE_TV)
-        "Radio" -> navController.navigate(Destinations.LIVE_TV)
-        "Settings" -> navController.navigate(Destinations.LIVE_TV)
+        "TV" -> navController.navigate(ScreenRoutes.LIVETV)
+        "Movies" -> {}
+        "Radio" -> {}
+        "Settings" -> {}
     }
 }
 
@@ -236,3 +245,5 @@ fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         }
     )
 }
+
+
