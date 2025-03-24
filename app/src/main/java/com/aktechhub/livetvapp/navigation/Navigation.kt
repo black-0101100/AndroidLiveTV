@@ -1,6 +1,7 @@
 package com.aktechhub.livetvapp.navigation
 
 // Navigation.kt
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavHostController
@@ -34,7 +35,9 @@ fun AppNavigation(navController: NavHostController) {
                 SplashScreen()
             }
             composable<ScreenRoutes.HOME> {
-                HomeScreen()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    HomeScreen()
+                }
             }
             composable<ScreenRoutes.LIVETV> {
                 LiveTvScreen {

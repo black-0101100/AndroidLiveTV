@@ -1,12 +1,14 @@
 package com.aktechhub.livetvapp.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,8 +42,9 @@ fun ChannelDetailScreen(
     ) {
         Card(
             modifier = Modifier
-                .fillMaxWidth(fraction = 0.9f) // Take 50% of the screen width
-                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp), // Padding around the card, with bottom padding to avoid overlapping with any ticker
+                .fillMaxWidth(fraction = 0.95f) // Take 95% of the screen width to match the image
+                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp) // Padding around the card
+                .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp)), // White border
             shape = RoundedCornerShape(12.dp), // Rounded corners for the box
             colors = CardDefaults.cardColors(
                 containerColor = Color.Black.copy(alpha = 0.6f) // Semi-transparent background
@@ -52,39 +55,61 @@ fun ChannelDetailScreen(
         ) {
             Row(
                 modifier = Modifier
-                    .padding(20.dp), // Increased padding inside the card for a more spacious look
+                    .padding(16.dp), // Padding inside the card
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Logo Box
-                Box(
+                // Channel Logo (No box, larger size, transparent background)
+                AsyncImage(
+                    model = channelLogoUrl,
+                    contentDescription = "Channel Logo",
                     modifier = Modifier
-                        .size(80.dp) // Increased logo size to match the second screenshot
-                        .background(Color.Black.copy(alpha = 0.4f)) // Slightly transparent box
-                        .padding(8.dp)
+                        .size(80.dp) // Larger size for the logo
+                        .background(Color.Transparent) // Transparent background
+                )
+
+                Spacer(modifier = Modifier.width(16.dp)) // Space between logo and details
+
+                // Channel Details (Right Section)
+                Row(
+                    modifier = Modifier
+                        .weight(1f), // Take remaining space
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        model = channelLogoUrl,
-                        contentDescription = "Channel Logo",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                    Column(
+                        modifier = Modifier
+                            .weight(1f) // Take most of the space, leaving room for the star icon
+                    ) {
+                        // Channel Number and Name in the same row
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "$channelNumber - ",
+                                color = Color.White, // White text for channel number
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = channelName,
+                                color = Color.White,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
 
-                Spacer(modifier = Modifier.width(16.dp)) // Increased space between logo and text for better balance
+                        // Horizontal Line
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color.White.copy(alpha = 0.5f)) // White line with slight transparency
+                                .padding(top = 8.dp)
+                        )
 
-                // Channel Details
-                Column {
-                    Text(
-                        text = channelNumber,
-                        color = Color.White,
-                        fontSize = 24.sp, // Increased font size to match the second screenshot
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = channelName,
-                        color = Color.White,
-                        fontSize = 20.sp, // Increased font size to match the second screenshot
-                        fontWeight = FontWeight.Medium
-                    )
+                        // More space for future EPG data
+                        Spacer(modifier = Modifier.height(48.dp)) // Increased space for EPG
+                    }
+
                 }
             }
         }
@@ -96,4 +121,3 @@ fun ChannelDetailScreen(
         onTimeout()
     }
 }
-

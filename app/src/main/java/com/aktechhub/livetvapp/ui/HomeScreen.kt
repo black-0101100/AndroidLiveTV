@@ -2,6 +2,7 @@ package com.aktechhub.livetvapp.ui
 
 import android.app.Activity
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
@@ -36,6 +37,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -58,6 +62,16 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+// Define menuItems outside the HomeScreen composable
+private val menuItems = listOf(
+    MenuItem("TV", R.drawable.main_tv, Color(0xFFE91E63)),
+    MenuItem("VOD", R.drawable.main_vod, Color(0xFF8BC34A)),
+    MenuItem("Radio", R.drawable.main_radio, Color(0xFF2196F3)),
+    MenuItem("Settings", R.drawable.main_settings, Color(0xFFFF9800)),
+    MenuItem("Profile", R.drawable.main_profile, Color(0xFF4CAF50)),
+    MenuItem("Application", R.drawable.main_applications, Color(0xFF03A9F4))
+)
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen() {
@@ -70,6 +84,9 @@ fun HomeScreen() {
     // Default selected index is 0 (TV)
     var selectedIndex by remember { mutableIntStateOf(0) }
 
+    // Focus requester for each menu item
+    val focusRequesters = remember { List(menuItems.size) { FocusRequester() } }
+
     // Current date and time in IST
     var currentDateTime by remember { mutableStateOf(LocalDateTime.now(ZoneId.of("Asia/Kolkata"))) }
     LaunchedEffect(Unit) {
@@ -81,41 +98,16 @@ fun HomeScreen() {
     val dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-    val menuItems = listOf(
-        MenuItem("TV", R.drawable.main_tv, Color(0xFFE91E63)),
-        MenuItem("VOD", R.drawable.main_vod, Color(0xFF8BC34A)),
-        MenuItem("Radio", R.drawable.main_radio, Color(0xFF2196F3)),
-        MenuItem("Settings", R.drawable.main_settings, Color(0xFFFF9800)),
-        MenuItem("Profile", R.drawable.main_profile, Color(0xFF4CAF50)),
-        MenuItem("Application", R.drawable.main_applications, Color(0xFF03A9F4))
-    )
+    // Request focus on the initially selected item (TV) with a small delay
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(100L) // Small delay to ensure UI is ready
+        focusRequesters[0].requestFocus()
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .onKeyEvent { event ->  // D-pad key navigation
-                if (event.type == KeyEventType.KeyDown) {
-                    when (event.key) {
-                        Key.DirectionRight -> {
-                            if (selectedIndex < menuItems.lastIndex) selectedIndex++
-                            true
-                        }
-
-                        Key.DirectionLeft -> {
-                            if (selectedIndex > 0) selectedIndex--
-                            true
-                        }
-
-                        Key.Enter, Key.NumPadEnter -> { // Handle selection with one click
-                            navigateToScreen(navController, menuItems[selectedIndex].title)
-                            true
-                        }
-
-                        else -> false
-                    }
-                } else false
-            }
     ) {
         // Background
         Image(
@@ -171,9 +163,26 @@ fun HomeScreen() {
                 MenuItemCard(
                     item = item,
                     isSelected = selectedIndex == index,
-                    onClick = {
-                        selectedIndex = index
-                        navigateToScreen(navController, item.title) // Navigate on click
+                    focusRequester = focusRequesters[index],
+                    onEnter = {
+                        navigateToScreen(navController, item.title) // Handle Enter key or tap
+                    },
+                    onMoveLeft = {
+                        if (selectedIndex > 0) {
+                            selectedIndex--
+                            focusRequesters[selectedIndex].requestFocus()
+                        }
+                    },
+                    onMoveRight = {
+                        if (selectedIndex < menuItems.lastIndex) {
+                            selectedIndex++
+                            focusRequesters[selectedIndex].requestFocus()
+                        }
+                    },
+                    onFocusChange = { isFocused ->
+                        if (isFocused) {
+                            selectedIndex = index // Update selected index when focused
+                        }
                     }
                 )
             }
@@ -202,38 +211,79 @@ private fun navigateToScreen(navController: NavController, title: String) {
 }
 
 @Composable
-fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
+fun MenuItemCard(
+    item: MenuItem,
+    isSelected: Boolean,
+    focusRequester: FocusRequester,
+    onEnter: () -> Unit, // Callback for Enter key press or tap
+    onMoveLeft: () -> Unit, // Callback for moving left
+    onMoveRight: () -> Unit, // Callback for moving right
+    onFocusChange: (Boolean) -> Unit // Callback for focus changes
+) {
+    var isFocused by remember { mutableStateOf(false) } // Track focus state for debugging
+
     val scale by animateFloatAsState(targetValue = if (isSelected) 1.2f else 1.0f, label = "")
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
-    // Adaptive card width based on screen size
+    // Adjusted card width to ensure all icons fit on the screen
     val cardWidth = when {
-        screenWidth > 800.dp -> screenWidth * 0.18f  // Larger screens (TV)
-        else -> screenWidth * 0.25f                   // Smaller screens (Mobile)
+        screenWidth > 800.dp -> screenWidth * 0.12f  // Reduced size for Android TV
+        else -> screenWidth * 0.15f                   // Reduced size for Mobile
     }
     val cardHeight = cardWidth * 0.6f  // Maintain aspect ratio
 
     // Dynamic icon size based on card width
-    val baseIconSize = if (isSelected) (cardWidth * 0.3f).coerceIn(24.dp, 48.dp) // Smaller when selected
-    else (cardWidth * 0.5f).coerceIn(32.dp, 64.dp) // Larger when not selected
+    val baseIconSize = if (isSelected) (cardWidth * 0.3f).coerceIn(20.dp, 40.dp) // Reduced size when selected
+    else (cardWidth * 0.5f).coerceIn(24.dp, 48.dp) // Reduced size when not selected
     val iconSize = baseIconSize
 
     Card(
         modifier = Modifier
-            .padding(8.dp)
-            .clickable { onClick() }
-            .width((cardWidth * scale).coerceAtMost(screenWidth * 0.45f))  // Prevent overflow
+            .padding(4.dp)
+            .width((cardWidth * scale).coerceAtMost(screenWidth * 0.3f))
             .height(cardHeight * scale)
             .focusable()
-            .clip(RoundedCornerShape(16.dp))
-            .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(16.dp)), // Add border
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+                isFocused = focusState.isFocused
+                onFocusChange(focusState.isFocused) // Update selected index when focused
+            }
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown) {
+                    // Log the key code for debugging
+                    Log.d("MenuItemCard", "Key pressed: ${event.key}")
+                    when (event.key) {
+                        Key.Enter, Key.NumPadEnter -> { // Added Key.Center for Android TV
+                            onEnter() // Handle Enter key press
+                            true
+                        }
+                        Key.DirectionLeft -> {
+                            onMoveLeft() // Handle left navigation
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            onMoveRight() // Handle right navigation
+                            true
+                        }
+                        else -> false
+                    }
+                } else false
+            }
+            .clickable { onEnter() } // Handle tap on mobile
+            .clip(RoundedCornerShape(12.dp))
+            .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) Color.Yellow else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            ), // Visual focus indicator
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) item.color.copy(alpha = 0.8f) else item.color.copy(alpha = 0.6f)
         ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 16.dp else 8.dp)
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 12.dp else 8.dp)
     ) {
         Column(
             modifier = Modifier
