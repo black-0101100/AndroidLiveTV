@@ -38,7 +38,6 @@ import androidx.media3.ui.PlayerView
 import com.aktechhub.livetvapp.model.Channel
 import com.aktechhub.livetvapp.repository.ChannelRepository
 
-
 @OptIn(UnstableApi::class)
 @Composable
 fun LiveTvScreen(onExit: () -> Unit) {
@@ -57,10 +56,18 @@ fun LiveTvScreen(onExit: () -> Unit) {
     // ExoPlayer Setup
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            if (channels.isNotEmpty()) {
+            // Ensure playback starts automatically when media is set
+            playWhenReady = true
+        }
+    }
+
+    // Automatically set and play the first channel when channels are loaded
+    LaunchedEffect(channels) {
+        if (channels.isNotEmpty() && !exoPlayer.isPlaying) {
+            exoPlayer.apply {
                 setMediaItem(MediaItem.fromUri(channels[currentChannelIndex].streamUrl))
                 prepare()
-                play()
+                play() // Explicitly call play() to ensure it starts
             }
         }
     }
@@ -165,7 +172,6 @@ fun LiveTvScreen(onExit: () -> Unit) {
 
             if (showChannelDetail) {
                 val currentChannel = channels[currentChannelIndex]
-
                 ChannelDetailScreen(
                     channelNumber = currentChannel.number.toString(),
                     channelName = currentChannel.name,
