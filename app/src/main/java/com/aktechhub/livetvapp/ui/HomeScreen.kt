@@ -1,10 +1,13 @@
 package com.aktechhub.livetvapp.ui
 
 import android.app.Activity
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -49,18 +54,32 @@ import androidx.navigation.NavController
 import com.aktechhub.livetvapp.R
 import com.aktechhub.livetvapp.extentions.LocalNavController
 import com.aktechhub.livetvapp.navigation.ScreenRoutes
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen() {
-
     val navController = LocalNavController.current
     val context = LocalContext.current
     val activity = context as? Activity
     var showExitDialog by remember { mutableStateOf(false) }
     BackHandler { showExitDialog = true }
 
-    var selectedIndex by remember { mutableIntStateOf(0) } // Tracks focused item
+    // Default selected index is 0 (TV)
+    var selectedIndex by remember { mutableIntStateOf(0) }
+
+    // Current date and time in IST
+    var currentDateTime by remember { mutableStateOf(LocalDateTime.now(ZoneId.of("Asia/Kolkata"))) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentDateTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
+            kotlinx.coroutines.delay(1000L) // Update every second
+        }
+    }
+    val dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     val menuItems = listOf(
         MenuItem("TV", R.drawable.main_tv, Color(0xFFE91E63)),
@@ -70,8 +89,6 @@ fun HomeScreen() {
         MenuItem("Profile", R.drawable.main_profile, Color(0xFF4CAF50)),
         MenuItem("Application", R.drawable.main_applications, Color(0xFF03A9F4))
     )
-
-
 
     Box(
         modifier = Modifier
@@ -90,7 +107,7 @@ fun HomeScreen() {
                             true
                         }
 
-                        Key.Enter, Key.NumPadEnter -> { // Handle selection
+                        Key.Enter, Key.NumPadEnter -> { // Handle selection with one click
                             navigateToScreen(navController, menuItems[selectedIndex].title)
                             true
                         }
@@ -109,12 +126,15 @@ fun HomeScreen() {
         )
 
         // Logo
+        val configuration = LocalConfiguration.current
+        val screenWidth = configuration.screenWidthDp.dp
+        val logoSize = (screenWidth * 0.15f).coerceIn(80.dp, 150.dp) // Responsive logo size
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "SkyPlay Logo",
             modifier = Modifier
-                .padding(24.dp)
-                .size(120.dp)
+                .padding(start = 24.dp, top = 16.dp) // Moved up (reduced top padding)
+                .size(logoSize)
         )
 
         // Date & Time
@@ -124,15 +144,17 @@ fun HomeScreen() {
                 .fillMaxWidth()
                 .padding(end = 24.dp, top = 16.dp)
         ) {
+            val textSize = if (screenWidth > 800.dp) 22.sp else 18.sp // Larger text for TV
+            val clockSize = if (screenWidth > 800.dp) 56.sp else 48.sp
             Text(
-                text = "Saturday, 22 March 2025",
+                text = currentDateTime.format(dateFormatter),
                 color = Color.White,
-                fontSize = 18.sp
+                fontSize = textSize
             )
             Text(
-                text = "16:26",
+                text = currentDateTime.format(timeFormatter),
                 color = Color.White,
-                fontSize = 48.sp,
+                fontSize = clockSize,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -151,7 +173,7 @@ fun HomeScreen() {
                     isSelected = selectedIndex == index,
                     onClick = {
                         selectedIndex = index
-                        navigateToScreen(navController, item.title)
+                        navigateToScreen(navController, item.title) // Navigate on click
                     }
                 )
             }
@@ -171,9 +193,11 @@ fun HomeScreen() {
 private fun navigateToScreen(navController: NavController, title: String) {
     when (title) {
         "TV" -> navController.navigate(ScreenRoutes.LIVETV)
-        "Movies" -> {}
+        "VOD" -> {} // Update with actual navigation if needed
         "Radio" -> {}
         "Settings" -> {}
+        "Profile" -> {}
+        "Application" -> {}
     }
 }
 
@@ -184,12 +208,17 @@ fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
 
-    // Adaptive card width for different screens
+    // Adaptive card width based on screen size
     val cardWidth = when {
-        screenWidth > 800.dp -> 180.dp  // For Android TV
-        else -> 140.dp                  // For Mobile
+        screenWidth > 800.dp -> screenWidth * 0.18f  // Larger screens (TV)
+        else -> screenWidth * 0.25f                   // Smaller screens (Mobile)
     }
     val cardHeight = cardWidth * 0.6f  // Maintain aspect ratio
+
+    // Dynamic icon size based on card width
+    val baseIconSize = if (isSelected) (cardWidth * 0.3f).coerceIn(24.dp, 48.dp) // Smaller when selected
+    else (cardWidth * 0.5f).coerceIn(32.dp, 64.dp) // Larger when not selected
+    val iconSize = baseIconSize
 
     Card(
         modifier = Modifier
@@ -197,7 +226,9 @@ fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
             .clickable { onClick() }
             .width((cardWidth * scale).coerceAtMost(screenWidth * 0.45f))  // Prevent overflow
             .height(cardHeight * scale)
-            .focusable(),
+            .focusable()
+            .clip(RoundedCornerShape(16.dp))
+            .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(16.dp)), // Add border
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) item.color.copy(alpha = 0.8f) else item.color.copy(alpha = 0.6f)
         ),
@@ -217,19 +248,22 @@ fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
                     )
                 ),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = if (isSelected) Arrangement.SpaceEvenly else Arrangement.Center
         ) {
             Image(
                 painter = painterResource(id = item.iconRes),
                 contentDescription = item.title,
-                modifier = Modifier.size(if (isSelected) 56.dp else 42.dp) // Bigger when selected
+                modifier = Modifier.size(iconSize),
+                contentScale = ContentScale.Fit  // Ensure the icon fits within bounds
             )
-            Text(
-                text = item.title,
-                color = Color.White,
-                fontSize = if (isSelected) 20.sp else 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (isSelected) {
+                Text(
+                    text = item.title,
+                    color = Color.White,
+                    fontSize = (cardWidth * 0.08f).value.sp, // Dynamic text size
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -238,25 +272,27 @@ data class MenuItem(val title: String, val iconRes: Int, val color: Color)
 
 @Composable
 fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogTextSize = if (screenWidth > 800.dp) 20.sp else 18.sp
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = "Exit App", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(text = "Exit App", fontSize = dialogTextSize, fontWeight = FontWeight.Bold)
         },
         text = {
-            Text(text = "Are you sure you want to exit?")
+            Text(text = "Are you sure you want to exit?", fontSize = dialogTextSize)
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Yes", fontSize = 18.sp, color = Color.Red)
+                Text("Yes", fontSize = dialogTextSize, color = Color.Red)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("No", fontSize = 18.sp, color = Color.Blue)
+                Text("No", fontSize = dialogTextSize, color = Color.Blue)
             }
         }
     )
 }
-
-
