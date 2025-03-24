@@ -1,9 +1,9 @@
 package com.aktechhub.livetvapp.ui
 
-
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -31,23 +32,36 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.aktechhub.livetvapp.repository.Channel
+import com.aktechhub.livetvapp.model.Channel
 import com.aktechhub.livetvapp.repository.ChannelRepository
 
+
+@OptIn(UnstableApi::class)
 @Composable
 fun LiveTvScreen(onExit: () -> Unit) {
     val context = LocalContext.current
-    val channels by remember { mutableStateOf(ChannelRepository.getChannels()) }
+    var channels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var currentChannelIndex by remember { mutableIntStateOf(0) }
     var showChannelDetail by remember { mutableStateOf(false) }
 
+    rememberCoroutineScope()
+
+    // Fetch channels from API
+    LaunchedEffect(Unit) {
+        channels = ChannelRepository.getChannels()
+    }
+
+    // ExoPlayer Setup
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            setMediaItem(MediaItem.fromUri(channels[currentChannelIndex].streamUrl)) // FIXED
-            prepare()
-            play()
+            if (channels.isNotEmpty()) {
+                setMediaItem(MediaItem.fromUri(channels[currentChannelIndex].streamUrl))
+                prepare()
+                play()
+            }
         }
     }
 
@@ -84,7 +98,7 @@ fun LiveTvScreen(onExit: () -> Unit) {
                     onDragEnd = { lastSwipeTime = System.currentTimeMillis() },
                     onVerticalDrag = { _, dragAmount ->
                         val currentTime = System.currentTimeMillis()
-                        if (kotlin.math.abs(dragAmount) > swipeThreshold &&
+                        if (channels.isNotEmpty() && kotlin.math.abs(dragAmount) > swipeThreshold &&
                             (currentTime - lastSwipeTime) > swipeCooldown
                         ) {
                             changeChannel(dragAmount, currentChannelIndex, channels, exoPlayer) { newIndex ->
@@ -133,29 +147,32 @@ fun LiveTvScreen(onExit: () -> Unit) {
                 }
             }
     ) {
-        AndroidView(
-            factory = {
-                PlayerView(context).apply {
-                    player = exoPlayer
-                    useController = false
-                    layoutParams = FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        if (showChannelDetail) {
-            val currentChannel = channels[currentChannelIndex]
-
-            ChannelDetailScreen(
-                channelNumber = currentChannel.number.toString(),
-                channelName = currentChannel.name,
-                channelLogoUrl = currentChannel.logoUrl,
-                onTimeout = { showChannelDetail = false }
+        if (channels.isNotEmpty()) {
+            AndroidView(
+                factory = {
+                    PlayerView(context).apply {
+                        player = exoPlayer
+                        useController = false
+                        layoutParams = FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL)
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
             )
+
+            if (showChannelDetail) {
+                val currentChannel = channels[currentChannelIndex]
+
+                ChannelDetailScreen(
+                    channelNumber = currentChannel.number.toString(),
+                    channelName = currentChannel.name,
+                    channelLogoUrl = currentChannel.logoUrl,
+                    onTimeout = { showChannelDetail = false }
+                )
+            }
         }
     }
 
@@ -164,7 +181,7 @@ fun LiveTvScreen(onExit: () -> Unit) {
     }
 }
 
-// FIXED: Use List<Channel> instead of List<String>
+// Channel Switching Function
 fun changeChannel(
     dragAmount: Float,
     currentIndex: Int,
@@ -172,6 +189,8 @@ fun changeChannel(
     exoPlayer: ExoPlayer,
     onChannelChanged: (Int) -> Unit
 ) {
+    if (channels.isEmpty()) return
+
     val newIndex = when {
         dragAmount > 0 && currentIndex < channels.size - 1 -> currentIndex + 1
         dragAmount < 0 && currentIndex > 0 -> currentIndex - 1
@@ -179,7 +198,7 @@ fun changeChannel(
     }
 
     exoPlayer.apply {
-        setMediaItem(MediaItem.fromUri(channels[newIndex].streamUrl)) // FIXED
+        setMediaItem(MediaItem.fromUri(channels[newIndex].streamUrl))
         prepare()
         play()
     }

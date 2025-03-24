@@ -38,6 +38,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -102,7 +104,8 @@ fun HomeScreen() {
         Image(
             painter = painterResource(id = R.drawable.bg_home),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
 
         // Logo
@@ -178,12 +181,22 @@ private fun navigateToScreen(navController: NavController, title: String) {
 fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
     val scale by animateFloatAsState(targetValue = if (isSelected) 1.2f else 1.0f, label = "")
 
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+
+    // Adaptive card width for different screens
+    val cardWidth = when {
+        screenWidth > 800.dp -> 180.dp  // For Android TV
+        else -> 140.dp                  // For Mobile
+    }
+    val cardHeight = cardWidth * 0.6f  // Maintain aspect ratio
+
     Card(
         modifier = Modifier
             .padding(8.dp)
             .clickable { onClick() }
-            .width(140.dp * scale)
-            .height(80.dp * scale)
+            .width((cardWidth * scale).coerceAtMost(screenWidth * 0.45f))  // Prevent overflow
+            .height(cardHeight * scale)
             .focusable(),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) item.color.copy(alpha = 0.8f) else item.color.copy(alpha = 0.6f)
@@ -209,12 +222,12 @@ fun MenuItemCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
             Image(
                 painter = painterResource(id = item.iconRes),
                 contentDescription = item.title,
-                modifier = Modifier.size(if (isSelected) 48.dp else 32.dp) // Bigger when selected
+                modifier = Modifier.size(if (isSelected) 56.dp else 42.dp) // Bigger when selected
             )
             Text(
                 text = item.title,
                 color = Color.White,
-                fontSize = if (isSelected) 18.sp else 16.sp,
+                fontSize = if (isSelected) 20.sp else 16.sp,
                 fontWeight = FontWeight.Bold
             )
         }
