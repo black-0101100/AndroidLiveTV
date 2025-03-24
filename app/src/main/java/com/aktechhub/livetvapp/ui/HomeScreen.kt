@@ -61,6 +61,7 @@ import com.aktechhub.livetvapp.navigation.ScreenRoutes
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 
 // Define menuItems outside the HomeScreen composable
 private val menuItems = listOf(
@@ -84,6 +85,9 @@ fun HomeScreen() {
     // Default selected index is 0 (TV)
     var selectedIndex by remember { mutableIntStateOf(0) }
 
+    // State to trigger navigation after animation
+    var navigateToScreen by remember { mutableStateOf<String?>(null) }
+
     // Focus requester for each menu item
     val focusRequesters = remember { List(menuItems.size) { FocusRequester() } }
 
@@ -92,7 +96,7 @@ fun HomeScreen() {
     LaunchedEffect(Unit) {
         while (true) {
             currentDateTime = LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
-            kotlinx.coroutines.delay(1000L) // Update every second
+            delay(1000L) // Update every second
         }
     }
     val dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy")
@@ -100,8 +104,17 @@ fun HomeScreen() {
 
     // Request focus on the initially selected item (TV) with a small delay
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(100L) // Small delay to ensure UI is ready
+        delay(100L) // Small delay to ensure UI is ready
         focusRequesters[0].requestFocus()
+    }
+
+    // Handle navigation after animation
+    LaunchedEffect(navigateToScreen) {
+        navigateToScreen?.let { title ->
+            delay(300L) // Delay to allow zoom animation to play
+            navigateToScreen(navController, title)
+            navigateToScreen = null // Reset after navigation
+        }
     }
 
     Box(
@@ -165,7 +178,8 @@ fun HomeScreen() {
                     isSelected = selectedIndex == index,
                     focusRequester = focusRequesters[index],
                     onEnter = {
-                        navigateToScreen(navController, item.title) // Handle Enter key or tap
+                        selectedIndex = index // Update selectedIndex on tap
+                        navigateToScreen = item.title // Trigger navigation after animation
                     },
                     onMoveLeft = {
                         if (selectedIndex > 0) {
@@ -200,8 +214,12 @@ fun HomeScreen() {
 
 // Function to navigate based on menu item selection
 private fun navigateToScreen(navController: NavController, title: String) {
+    Log.d("HomeScreen", "Navigating to: $title")
     when (title) {
-        "TV" -> navController.navigate(ScreenRoutes.LIVETV)
+        "TV" -> {
+            Log.d("HomeScreen", "Navigating to LiveTV screen: ${ScreenRoutes.LIVETV}")
+            navController.navigate(ScreenRoutes.LIVETV)
+        }
         "VOD" -> {} // Update with actual navigation if needed
         "Radio" -> {}
         "Settings" -> {}
@@ -222,7 +240,10 @@ fun MenuItemCard(
 ) {
     var isFocused by remember { mutableStateOf(false) } // Track focus state for debugging
 
-    val scale by animateFloatAsState(targetValue = if (isSelected) 1.2f else 1.0f, label = "")
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.2f else 1.0f,
+        label = "scaleAnimation"
+    )
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
