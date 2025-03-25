@@ -50,6 +50,8 @@ import androidx.media3.ui.PlayerView
 import com.aktechhub.livetvapp.R
 import com.aktechhub.livetvapp.menu.LiveTVMenuScreen
 import com.aktechhub.livetvapp.model.Channel
+import com.aktechhub.livetvapp.model.Genre
+import com.aktechhub.livetvapp.model.Language
 import com.aktechhub.livetvapp.remote.ChannelRepository
 import kotlin.math.abs
 
@@ -58,6 +60,8 @@ import kotlin.math.abs
 fun LiveTvScreen(onExit: () -> Unit) {
     val context = LocalContext.current
     var channels by remember { mutableStateOf<List<Channel>>(emptyList()) }
+    var genres by remember { mutableStateOf<List<Genre>>(emptyList()) }
+    var languages by remember { mutableStateOf<List<Language>>(emptyList()) }
     var currentChannelIndex by remember { mutableIntStateOf(0) }
     var showChannelDetail by remember { mutableStateOf(false) }
 
@@ -66,7 +70,10 @@ fun LiveTvScreen(onExit: () -> Unit) {
     // Fetch channels from API
     LaunchedEffect(Unit) {
         channels = ChannelRepository.getChannels()
+        genres = ChannelRepository.getGenres()
+        languages = ChannelRepository.getLanguages()
     }
+
 
     // ExoPlayer Setup
     val exoPlayer = remember {
@@ -114,9 +121,10 @@ fun LiveTvScreen(onExit: () -> Unit) {
         LiveTVMenuScreen(
             modifier = Modifier
                 .weight(0.50f),
-            onLanguageSelect = {},
-            onCategorySelect = {},
-            onChannelSelect = {}
+            languages,
+            genres,
+            channels,
+            onChannelSelect = {},
 
         )
 
@@ -227,8 +235,8 @@ fun LiveTvScreen(onExit: () -> Unit) {
                     if (showChannelDetail) {
                         val currentChannel = channels[currentChannelIndex]
                         ChannelDetailScreen(
-                            channelNumber = currentChannel.number.toString(),
-                            channelName = currentChannel.name,
+                            channelNumber = currentChannel.channelNumber.toString(),
+                            channelName = currentChannel.channelName,
                             channelLogoUrl = currentChannel.logoUrl,
                             onTimeout = { showChannelDetail = false }
                         )

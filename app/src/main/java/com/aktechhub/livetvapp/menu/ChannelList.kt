@@ -13,41 +13,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.aktechhub.livetvapp.remote.LocalRepository
+import com.aktechhub.livetvapp.model.Channel
 
 @Composable
-fun ChannelList(onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun ChannelList(channels: List<Channel>, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .background(Color.DarkGray)
-            .border(2.dp, Color.LightGray) // Border for whole Category List
+            .border(2.dp, Color.LightGray) // Border for the whole Channel List
     ) {
-    LazyColumn(
-        Modifier.fillMaxSize()
-    ) {
-        items(LocalRepository.channels) { channel ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(0.5.dp, Color.LightGray)
-                    .clickable { onSelect(channel.id)}
-                    .padding(8.dp)
-
-            ) {
-                Text(
-                text = "${channel.number} - ${channel.name}",
-                color = Color.White
-                )
-              }
+        LazyColumn(
+            Modifier.fillMaxSize()
+        ) {
+            items(channels) { channel ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(0.5.dp, Color.LightGray)
+                        .clickable { onSelect(channel.channelNumber) }
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "${channel.channelNumber} - ${channel.channelName}",
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
-}
-    }
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewChannelList() {
-    ChannelList(onSelect = {})
 }

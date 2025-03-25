@@ -13,12 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.aktechhub.livetvapp.remote.LocalRepository
+import com.aktechhub.livetvapp.model.Language
+
 
 @Composable
-fun LanguageList(onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun LanguageList(languages : List<Language>, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .background(Color.DarkGray)
@@ -27,25 +27,25 @@ fun LanguageList(onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ){
-            items(LocalRepository.languages) { language ->
+            items(languages) { language ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(0.5.dp, Color.LightGray)
-                        .clickable { onSelect(language.id)}
+                        .clickable { onSelect(language.languageId)}
                         .padding(8.dp)
                 ) {
-                Text(
-                    text = language.name,
-                    color = Color.White
-                )
+                    Text(
+                        text = language.languageName,
+                        color = Color.White
+                    )
                 }
             }
         }
     }
 }
-@Preview(showBackground = true)
-@Composable
-fun PreviewLanguageList() {
-    LanguageList(onSelect = {})
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewLanguageList() {
+   // LanguageList(onSelect = {})
+//}
