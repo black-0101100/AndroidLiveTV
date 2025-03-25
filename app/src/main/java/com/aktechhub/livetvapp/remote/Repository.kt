@@ -1,4 +1,4 @@
-package com.aktechhub.livetvapp.repository
+package com.aktechhub.livetvapp.remote
 
 import com.aktechhub.livetvapp.model.Channel
 import com.aktechhub.livetvapp.model.ChannelResponse

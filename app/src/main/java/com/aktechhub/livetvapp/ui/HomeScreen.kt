@@ -138,7 +138,7 @@ fun HomeScreen() {
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "SkyPlay Logo",
             modifier = Modifier
-                .padding(start = 24.dp, top = 16.dp) // Moved up (reduced top padding)
+                .padding(start = 24.dp, top = 1.dp) // Moved up (reduced top padding)
                 .size(logoSize)
         )
 
