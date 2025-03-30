@@ -15,26 +15,30 @@ import kotlinx.serialization.json.Json
 object ChannelRepository {
     private val client = HttpClient {
         install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
+            json(Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+            })
+
         }
     }
 
-    private const val BASE_URL = "https://dooo.jollytv.site/live/api.php"
-    private const val USERNAME = "testuser"
-    private const val PASSWORD = "testuser"
+    private const val BASE_URL = "https://dooo.jollytv.site/api.php"
+    private const val USERNAME = "49341"
+    private const val PASSWORD = "2WyE9"
 
     suspend fun getChannels(): List<Channel> {
-        val apiUrl = "$BASE_URL?username=$USERNAME&password=$PASSWORD&action=live_tv"
+        val apiUrl = "$BASE_URL?username=$USERNAME&password=$PASSWORD&action=get_live_tv"
         return fetchData<ChannelResponse>(apiUrl)?.channels ?: emptyList()
     }
 
     suspend fun getGenres(): List<Genre> {
-        val apiUrl = "$BASE_URL?username=$USERNAME&password=$PASSWORD&action=live_tv_genre"
+        val apiUrl = "$BASE_URL?username=$USERNAME&password=$PASSWORD&action=get_genres"
         return fetchData<GenreResponse>(apiUrl)?.genres ?: emptyList()
     }
 
     suspend fun getLanguages(): List<Language> {
-        val apiUrl = "$BASE_URL?username=$USERNAME&password=$PASSWORD&action=live_tv_languages"
+        val apiUrl = "$BASE_URL?username=$USERNAME&password=$PASSWORD&action=get_languages"
         return fetchData<LanguageResponse>(apiUrl)?.languages ?: emptyList()
     }
 
