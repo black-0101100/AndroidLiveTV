@@ -9,8 +9,8 @@ data class Channel(
     @SerialName("stream_name") val channelName: String,
     @SerialName("stream_source") val streamUrl: String,
     @SerialName("stream_source_type") val sourceType: String,
-    @SerialName("stream_genre") val genreId: Int,
-    @SerialName("stream_languages") val languageId: Int,
+    @SerialName("stream_genre") val streamGenreId: Int,
+    @SerialName("stream_languages") val streamLanguageId: Int,
     @SerialName("stream_image") val logoUrl: String,
     @SerialName("stream_epg_id") val epgId: String?,
     @SerialName("stream_price") val price: String
